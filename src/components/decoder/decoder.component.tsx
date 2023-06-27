@@ -2,6 +2,7 @@ import { gsap } from 'gsap';
 import { createSignal, onMount } from 'solid-js';
 import { Show } from 'solid-js/web';
 import toast from 'solid-toast';
+import ClipboardIcon from '../clipboard-icon';
 
 interface Props {
   title: string;
@@ -80,8 +81,16 @@ export default function DecoderComponent(props: Props) {
     gsap.to('.output', { scale: 1.1, opacity: 0, ease: 'back' }).then(() => {
       setOutput('');
       saveStorage();
+      gsap.from('.input', outputHiddenState);
       gsap.from('.output-fallback', outputHiddenState);
     });
+
+    gsap.to('.clippy', { opacity: 0 });
+  }
+
+  function copyHandler(): void {
+    navigator.clipboard.writeText(output());
+    toast.success('Copied to clipboard', { icon: '🎉' });
   }
 
   function saveStorage(): void {
@@ -105,6 +114,8 @@ export default function DecoderComponent(props: Props) {
       ease: 'back',
       delay: 0.2,
     });
+
+    gsap.to('.clippy', { opacity: 1 });
   }
 
   return (
@@ -118,16 +129,18 @@ export default function DecoderComponent(props: Props) {
         class='mt-5 block text-sm font-medium leading-6 text-gray-900'>
         About
       </label> */}
-      <div class='mt-2'>
-        <textarea
-          ref={inputTxtarea}
-          rows='7'
-          class='block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-sky-600 sm:text-sm sm:leading-6 resize-none read-only:bg-gray-100 read-only:pointer-events-none read-only:select-none'></textarea>
-      </div>
+      <Show when={!output()}>
+        <div class='mt-2'>
+          <textarea
+            ref={inputTxtarea}
+            rows='7'
+            class='input block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-sky-600 sm:text-sm sm:leading-6 resize-none read-only:bg-gray-100 read-only:pointer-events-none read-only:select-none'></textarea>
+        </div>
 
-      <p class='mt-1 text-sm leading-6 text-gray-600'>
-        This only decodes string data
-      </p>
+        <p class='mt-1 text-sm leading-6 text-gray-600'>
+          This only decodes string data
+        </p>
+      </Show>
 
       <div class='flex justify-between'>
         <button
@@ -149,13 +162,19 @@ export default function DecoderComponent(props: Props) {
         </button>
       </div>
 
-      <div class='mt-5'>
+      <div class='mt-5 relative group'>
         <Show when={output()} fallback={<FallbackOutput />}>
           <textarea
             readOnly
-            rows='10'
+            rows='20'
             class='output block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-sky-600 sm:text-sm sm:leading-6'
             value={output()}></textarea>
+
+          <button
+            onClick={copyHandler}
+            class='clippy absolute top-0 -right-10 py-2'>
+            <ClipboardIcon class='hover:!text-sky-600 text-indigo-600 active:scale-125 transition' />
+          </button>
         </Show>
       </div>
     </>
